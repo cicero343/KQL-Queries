@@ -1,0 +1,14 @@
+// This query identifies the top 10 entities (accounts, hosts, or names) associated with the highest number of security alerts over the past 30 days.  
+// It visualises the data in a bar chart for easy identification of high-risk entities.  
+
+SecurityAlert
+| where TimeGenerated >= ago(30d)
+| extend EntitiesDynamic = parse_json(Entities)
+| mv-expand EntitiesDynamic
+| extend AccountName = tostring(EntitiesDynamic.AccountName), HostName = tostring(EntitiesDynamic.HostName), Name = tostring(EntitiesDynamic.Name)
+| extend Identifier = iif(isnotempty(AccountName), AccountName, iif(isnotempty(HostName), HostName, Name))
+| where isnotempty(Identifier)
+| summarize AlertCount = count() by Identifier
+| order by AlertCount desc
+| top 10 by AlertCount
+| render barchart
