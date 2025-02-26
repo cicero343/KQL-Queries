@@ -1,0 +1,17 @@
+// This query tracks file activity for a specific user within cloud applications over the past 30 days.  
+// It extracts file details, filters specific file types, and identifies unique file operations performed by the target user.  
+
+CloudAppEvents
+| where Timestamp > ago(30d)
+| extend ParsedData = parse_json(RawEventData)
+| extend ObjectId = tostring(ParsedData.ObjectId), UserId = tostring(ParsedData.UserId), FileExtension = tostring(ParsedData.FileExtension), Operation = tostring(ParsedData.Operation)
+| summarize Count = count() by ObjectId, UserId, FileExtension, Operation, TimeGenerated
+| where FileExtension !in ("json", "html")
+| where UserId == "test.test@test.co.uk"
+| extend FileName = extract(@"[^\\\/]+$", 0, ObjectId)
+| extend DirectoryPath = replace(@"[^\\\/]+$", "", ObjectId)
+| where Count == 1
+| where isnotempty(FileName)
+| project DirectoryPath, FileName, UserId, FileExtension, Operation, TimeGenerated
+| order by TimeGenerated desc
+| take 200
