@@ -1,0 +1,9 @@
+// This query detects successful network connections to `.ru` domains over the past 30 days.  
+// It summarises connection counts and associated user accounts, highlighting potential suspicious activity.  
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(30d)
+| where ActionType == "ConnectionSuccess"
+| where RemoteUrl has ".ru"
+| summarize Count = count(), Users = makeset(InitiatingProcessAccountName) by RemoteUrl
+| top 10 by Count
