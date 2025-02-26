@@ -1,0 +1,9 @@
+// This query identifies the top devices where the `nmap` command has been executed in the past 14 days.  
+// It summarises the count of `nmap` executions per device and orders the results by the highest activity.  
+
+DeviceProcessEvents
+| where TimeGenerated >= ago(14d)
+| where ProcessCommandLine has "nmap"
+| summarize CommandCount = count() by DeviceName
+| order by CommandCount desc
+| render columnchart
