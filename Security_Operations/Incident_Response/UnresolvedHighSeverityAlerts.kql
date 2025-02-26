@@ -1,0 +1,14 @@
+// This query retrieves all high-severity security alerts from the past 30 days that remain unresolved.  
+// It extracts key entity details, such as associated accounts, hosts, and IP addresses, for further investigation.  
+
+SecurityAlert
+| where TimeGenerated >= ago(30d)
+| where AlertSeverity == "High"
+| where Status != "Resolved"
+| where DisplayName != " "
+| extend EntitiesDynamic = parse_json(Entities)
+| mv-expand EntitiesDynamic
+| extend AccountName = tostring(EntitiesDynamic.AccountName), HostName = tostring(EntitiesDynamic.HostName), Name = tostring(EntitiesDynamic.Name), Type = tostring(EntitiesDynamic.Type), IpAddress = tostring(EntitiesDynamic.LastIpAddress.Address)
+| summarize EntitiesList = make_list(EntitiesDynamic), AccountNames = make_set(AccountName), HostNames = make_set(HostName) by TimeGenerated, AlertSeverity, Status, DisplayName
+| project TimeGenerated, AlertSeverity, Status, DisplayName, AccountNames, HostNames, EntitiesList
+| sort by TimeGenerated desc
