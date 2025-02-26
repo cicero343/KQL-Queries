@@ -1,0 +1,9 @@
+// This query provides a daily breakdown of the total successful network connections per device over the past 7 days.  
+// It aggregates successful connections (`ConnectionSuccess`) by device and day, helping to identify fluctuations in network activity.
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(7d)
+| where ActionType == "ConnectionSuccess"
+| summarize TotalConsumption = count() by bin(Timestamp, 1d), DeviceId
+| project Timestamp, DeviceId, TotalConsumption
+| order by Timestamp asc
