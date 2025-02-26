@@ -1,0 +1,7 @@
+// This query identifies file creation and modification events for files larger than 100 MB, which could indicate security concerns.
+
+DeviceFileEvents
+| where FileSize > 104857600  // 100 MB in bytes
+| where ActionType == "FileCreated" or ActionType == "FileModified"
+| project Timestamp, DeviceName, FileName, FileSize, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by FileSize desc
