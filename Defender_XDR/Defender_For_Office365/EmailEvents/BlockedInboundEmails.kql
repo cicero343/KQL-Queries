@@ -1,0 +1,12 @@
+// This query identifies inbound emails that were blocked and sent to quarantine over the past 90 days.  
+// It summarises blocked emails by sender, subject, threat types, and applied policies to highlight potential threats.
+
+EmailEvents
+| where TimeGenerated > ago(90d)
+| where EmailDirection == "Inbound"
+| where DeliveryAction == "Blocked"
+| where LatestDeliveryLocation == "Quarantine"
+| where EmailAction == "Send to quarantine"
+| summarize RecipientEmailAddresses = make_list(RecipientEmailAddress), Count = count() by SenderFromAddress, Subject, ThreatTypes, EmailActionPolicy, UserLevelAction, UserLevelPolicy
+| project SenderFromAddress, Subject, RecipientEmailAddresses, ThreatTypes, EmailActionPolicy, UserLevelAction, UserLevelPolicy, Count
+| order by Count desc
