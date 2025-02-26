@@ -1,6 +1,6 @@
 // proof of concept
-// This query extracts and displays distinct device-related information from the SigninLogs table, focusing on operating system and browser details. 
-// It summarises the login data by various parameters, offering insight into user login activity across different devices.
+// This query analyzes sign-in logs, extracting authentication method and result details, 
+// It summarises the count of sign-ins grouped by various attributes including date, user, authentication method, and result, providing insights into authentication patterns.
 
 SigninLogs
 | extend StatusCode = tostring(Status.errorCode), StatusDetails = tostring(Status.additionalDetails)
