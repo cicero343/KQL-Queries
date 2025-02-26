@@ -1,0 +1,7 @@
+// This query retrieves email events from the past 30 days where the subject contains a specified keyword or phrase. 
+// It provides details on authentication, delivery actions, sender and recipient information, and applied policies.
+
+EmailEvents
+| where TimeGenerated > ago(30d)
+| where Subject contains "[ENTER SUBJECT HERE]"
+| project TimeGenerated, AuthenticationDetails, DeliveryAction, DeliveryLocation, EmailAction, EmailActionPolicy, RecipientEmailAddress, SenderFromAddress, Subject, UserLevelPolicy, Connectors
