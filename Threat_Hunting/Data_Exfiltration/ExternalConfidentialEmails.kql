@@ -1,0 +1,11 @@
+// This query identifies emails with "confidential" in the subject sent to external recipients over the past 7 days.  
+// It helps detect potential data leaks by summarizing sender, recipient, and email subject details.  
+// Change line 7 to match your domain.
+
+EmailEvents
+| where TimeGenerated >= ago(7d)
+| where not(RecipientEmailAddress has "DOMAIN.co.uk")
+| where Subject has "confidential"
+| summarize Count = count() by SenderFromAddress, RecipientEmailAddress, Subject
+| project SenderFromAddress, RecipientEmailAddress, Subject, Count
+| order by Count desc
