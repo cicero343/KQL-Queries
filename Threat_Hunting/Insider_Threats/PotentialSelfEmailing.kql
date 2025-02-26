@@ -1,0 +1,12 @@
+// This query detects emails where the recipient's address contains the sender's username, potentially indicating self-emailing behavior.  
+// It filters for external recipients and subjects containing "confidential" to help identify possible data exfiltration attempts.
+// Change line 7 to match your domain.
+
+EmailEvents
+| where TimeGenerated >= ago(30d)
+| where not(RecipientEmailAddress has "DOMAIN.co.uk")
+| where Subject has "confidential"
+| where RecipientEmailAddress contains tostring(split(SenderFromAddress, "@")[0])
+| summarize Count = count() by SenderFromAddress, RecipientEmailAddress, Subject
+| project SenderFromAddress, RecipientEmailAddress, Subject, Count
+| order by Count desc
