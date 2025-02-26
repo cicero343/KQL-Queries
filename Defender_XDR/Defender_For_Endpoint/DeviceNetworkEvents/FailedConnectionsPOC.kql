@@ -1,0 +1,8 @@
+// This query identifies network connection failures by summarising failed connections to remote URLs over the last 14 days. 
+// It provides insights into potential connectivity issues, which could be due to internet disruptions, misconfigurations, or other network problems.
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(14d)
+| where ActionType == "ConnectionFailed"
+| summarize ConnectionFailedCount = count(), AccountNames = makelist(InitiatingProcessAccountName) by RemoteUrl
+| order by ConnectionFailedCount desc
