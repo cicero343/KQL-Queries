@@ -1,0 +1,11 @@
+// This query tracks the top 10 users accessing TikTok in the past 14 days.  
+// It counts successful connections and visualises the results in a column chart.  
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(14d)
+| where ActionType == "ConnectionSuccess"
+| where RemoteUrl == "https://www.tiktok.com" or RemoteUrl == "www.tiktok.com" or RemoteUrl == "https://m.tiktok.com"
+| summarize Count = count() by InitiatingProcessAccountName
+| order by Count desc
+| top 10 by Count
+| render columnchart
