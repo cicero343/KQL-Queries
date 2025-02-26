@@ -1,0 +1,10 @@
+// This query identifies the top 10 spam emails received in the past 14 days, based on their subject.  
+// It visualises the most frequent spam email subjects in a column chart.  
+
+EmailEvents
+| where TimeGenerated > ago(14d)
+| where EmailDirection == "Inbound"
+| where ThreatTypes == "Spam"
+| summarize Count = count() by Subject
+| top 10 by Count
+| render columnchart
