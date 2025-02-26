@@ -1,0 +1,10 @@
+// This query identifies the top 10 most active devices in terms of successful network connections over the past 7 days.  
+// It counts the total successful connections (`ConnectionSuccess`) and summarises the users initiating these connections from each device.
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(7d)
+| where ActionType == "ConnectionSuccess"
+| summarize TotalConsumption = count(), Users = make_set(InitiatingProcessAccountUpn) by DeviceName
+| project DeviceName, TotalConsumption, Users
+| order by TotalConsumption desc
+| top 10 by TotalConsumption
