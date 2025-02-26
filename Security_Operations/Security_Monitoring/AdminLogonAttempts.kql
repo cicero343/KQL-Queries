@@ -1,0 +1,6 @@
+// This query counts successful and failed logon attempts for accounts containing "Admin" in their name.
+// It helps identify and monitor admin account activity for potential security risks.
+
+SecurityEvent
+| where Account contains "Admin"
+| summarize AdminSuccessfullLogons = countif(EventID == 4624), AdminFailedLogons = countif(EventID == 4625) by Account
