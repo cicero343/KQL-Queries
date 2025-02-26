@@ -1,0 +1,9 @@
+// This query retrieves all emails sent by a specific user in the past 7 days.  
+// It summarises the latest occurrence of each email by subject and recipient.  
+
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where SenderFromAddress == "test.test@test.co.uk"
+| summarize LatestTimeGenerated = arg_max(TimeGenerated, *) by Subject, RecipientEmailAddress
+| project LatestTimeGenerated, Subject, RecipientEmailAddress
+| order by LatestTimeGenerated
