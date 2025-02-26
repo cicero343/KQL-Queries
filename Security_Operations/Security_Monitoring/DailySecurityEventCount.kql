@@ -1,0 +1,7 @@
+// This query counts the total number of security events per day for the past 7 days.
+// It provides a daily summary of security events to monitor trends or spikes in activity.
+
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| summarize count() by bin(TimeGenerated, 1d)
+| order by TimeGenerated desc
