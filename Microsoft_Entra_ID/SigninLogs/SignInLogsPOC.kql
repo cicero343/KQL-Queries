@@ -1,0 +1,9 @@
+// proof of concept
+// This query extracts and displays distinct device-related information from the SigninLogs table, focusing on operating system and browser details. 
+// It summarises the login data by various parameters, offering insight into user login activity across different devices.
+
+SigninLogs
+| extend StatusCode = tostring(Status.errorCode), StatusDetails = tostring(Status.additionalDetails)
+| extend Date = startofday(TimeGenerated), Location = tostring(Location)
+| summarize LoginAttempts = count() by Date, Identity, UserDisplayName, UserPrincipalName, IPAddress, ResultType, ResultDescription, StatusCode, StatusDetails, Location
+| sort by Date desc
