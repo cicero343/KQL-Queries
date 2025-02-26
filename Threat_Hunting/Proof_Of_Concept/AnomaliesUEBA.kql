@@ -1,0 +1,6 @@
+// This query identifies and lists UEBA (User and Entity Behavior Analytics) anomalies.
+// It filters and orders anomalies based on the presence of "ueba" in the AnomalyTemplateName field.
+
+Anomalies
+| where AnomalyTemplateName has "ueba"
+| order by TimeGenerated desc
