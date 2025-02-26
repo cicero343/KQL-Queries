@@ -4,6 +4,8 @@
 
 SigninLogs
 | extend StatusCode = tostring(Status.errorCode), StatusDetails = tostring(Status.additionalDetails)
-| extend Date = startofday(TimeGenerated), Location = tostring(Location)
-| summarize LoginAttempts = count() by Date, Identity, UserDisplayName, UserPrincipalName, IPAddress, ResultType, ResultDescription, StatusCode, StatusDetails, Location
-| sort by Date desc
+| extend Date = startofday(TimeGenerated)
+| extend AuthDetails = parse_json(AuthenticationDetails)
+| extend AuthMethod = tostring(AuthDetails[0].authenticationMethod), AuthResult = tostring(AuthDetails[0]["authenticationStepResultDetail"])
+| summarize count() by Date, Identity, UserDisplayName, UserPrincipalName, IPAddress, ResultType, ResultDescription, StatusCode, StatusDetails, AuthMethod, AuthResult
+| sort by Date
