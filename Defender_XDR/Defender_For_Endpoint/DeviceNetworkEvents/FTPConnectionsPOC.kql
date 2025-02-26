@@ -1,0 +1,10 @@
+// proof of concept
+// This query identifies successful FTP connections (port 21) over the last 14 days.
+// Change or remove line 8 to match your needs.
+
+DeviceNetworkEvents
+| where TimeGenerated >= ago(14d)
+| where ActionType == "ConnectionSuccess"
+| where RemotePort == 21
+| where not(RemoteUrl contains "[ENTER DOMAIN HERE]")
+| summarize Websites = makelist(RemoteUrl), AccountNames = makelist(InitiatingProcessAccountName) by RemotePort
