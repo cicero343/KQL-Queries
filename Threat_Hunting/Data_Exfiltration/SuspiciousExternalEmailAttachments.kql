@@ -1,0 +1,15 @@
+// This query detects potentially suspicious email attachments sent externally over the past 30 days.  
+// It filters for specific file names (e.g., "bank", "passwords", "details") while excluding common image file types.  
+// Change line 7 to match your domain.
+
+EmailAttachmentInfo
+| where TimeGenerated >= ago(30d)
+| where not(RecipientEmailAddress contains "DOMAIN.co.uk")
+| where not(RecipientEmailAddress contains "onmicrosoft")
+| where FileType != "png"
+| where FileType != "jpeg"
+| where FileType != "gif"
+| where FileName contains "bank" or FileName contains "passwords" or FileName contains "details"
+| summarize Count = count() by SenderFromAddress, RecipientEmailAddress, FileName, FileType
+| project SenderFromAddress, RecipientEmailAddress, FileName, FileType, Count
+| order by Count desc
