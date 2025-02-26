@@ -1,0 +1,9 @@
+// This query tracks user logon activity on MDM Devices over the past 30 days.  
+// It summarises the logon count by user and device, ordered by the most recent logon dates.  
+
+DeviceInfo
+| where MachineGroup == "MDM Devices" and TimeGenerated > ago(30d)
+| mv-expand LoggedOnUsers
+| extend UserName = tostring(LoggedOnUsers.UserName), DeviceName, LogonDate = bin(TimeGenerated, 1d)
+| summarize LogonCount = count() by UserName, DeviceName, LogonDate
+| order by LogonDate, LogonCount desc
