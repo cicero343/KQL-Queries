@@ -1,0 +1,12 @@
+// This query identifies software that is installed on only one device across the environment.  
+// It first determines software with a device count of 1, then retrieves the corresponding device details.  
+// This can be useful for detecting rare or unique software that may require investigation. 
+
+let LowCountSoftware = DeviceTvmSoftwareInventory
+    | summarize DeviceCount = dcount(DeviceName) by SoftwareName
+    | where DeviceCount == 1
+    | project SoftwareName;
+DeviceTvmSoftwareInventory
+| where SoftwareName in (LowCountSoftware)
+| summarize UniqueSoftwareNames = make_list(SoftwareName) by DeviceName
+| project DeviceName, UniqueSoftwareNames
