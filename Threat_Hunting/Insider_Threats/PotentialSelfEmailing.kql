@@ -1,6 +1,5 @@
 // This query detects emails where the recipient's address contains the sender's username, potentially indicating self-emailing behavior.  
 // It filters for external recipients and subjects containing "confidential" to help identify possible data exfiltration attempts.
-// Change line 7 to match your domain.
 
 EmailEvents
 | where TimeGenerated >= ago(30d)
