@@ -4,9 +4,29 @@
 
 EmailEvents
 | where TimeGenerated >= ago(30d)
-| where not(RecipientEmailAddress has "DOMAIN.co.uk")
+| where not(RecipientEmailAddress has "onmicrosoft.com")
 | where Subject has "confidential"
-| where RecipientEmailAddress contains tostring(split(SenderFromAddress, "@")[0])
+| where not(Subject has "reservation")
+| where not(Subject has "hotel")
+| where not(Subject has "lunch")
+| where not(Subject has "meeting")
+| where not(Subject has "zoom")
+| where not(Subject has "appointment")
+| where not(Subject has "accepted")
+| where not(Subject has "exam")
+| where not(Subject has "holiday")
+| where not(Subject has "lesson")
+| where not(Subject has "newsletter")
+| where not(Subject has "attend")
+| where not(Subject has "guide")
+| where not(Subject has "booking")
+| where not(Subject has "register")
+| where not(Subject has "voucher")
+| where not(SenderFromAddress has "onmicrosoft.com")
+| extend SenderLocalPart = tostring(split(SenderFromAddress, "@")[0])
+| extend SenderWords = split(SenderLocalPart, ".")
+| where array_length(SenderWords) > 0
+| where RecipientEmailAddress contains SenderWords[0]
 | summarize Count = count() by SenderFromAddress, RecipientEmailAddress, Subject
 | project SenderFromAddress, RecipientEmailAddress, Subject, Count
 | order by Count desc
