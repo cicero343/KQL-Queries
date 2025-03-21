@@ -4,7 +4,7 @@
 EmailEvents
 | where TimeGenerated >= ago(30d)
 | where not(RecipientEmailAddress has "onmicrosoft.com")
-| where Subject has "confidential"
+// | where Subject has "confidential"
 | where not(Subject has "reservation")
 | where not(Subject has "hotel")
 | where not(Subject has "lunch")
