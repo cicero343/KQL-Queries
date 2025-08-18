@@ -1,5 +1,7 @@
-// This query detects emails where the recipient's address contains the sender's username, potentially indicating self-emailing behavior.  
-// It filters for external recipients and subjects containing "confidential" to help identify possible data exfiltration attempts.
+// This query detects emails where the recipient's address contains the first word 
+// of the sender's username (before the '@' and split on '.'), which may indicate 
+// potential self-emailing or data exfiltration. 
+// It filters for external recipients and excludes common benign subject patterns.
 
 EmailEvents
 | where TimeGenerated >= ago(30d)
