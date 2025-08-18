@@ -1,3 +1,8 @@
+// This query expands on the 1st version by checking if any part of the sender's username 
+// (split on '.') appears in the recipient's address. 
+// This broader matching increases coverage of possible self-emailing or exfiltration 
+// attempts, but may also generate more false positives compared to the 1st version.
+
 EmailEvents
 | where TimeGenerated >= ago(30d)
 | where not(RecipientEmailAddress has "onmicrosoft.com")
