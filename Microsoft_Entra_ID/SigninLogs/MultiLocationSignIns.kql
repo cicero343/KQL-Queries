@@ -4,6 +4,7 @@
 // compromise. Shows detailed sign-in patterns including multiple locations per user per day 
 // and account status. Filters to apps with <1000 total sign-ins to focus on smaller, 
 // potentially targeted applications rather than noisy enterprise apps.
+
 let azureSignIns = SigninLogs 
 | where SourceSystem == "Azure AD" 
 | where OperationName == "Sign-in activity" 
