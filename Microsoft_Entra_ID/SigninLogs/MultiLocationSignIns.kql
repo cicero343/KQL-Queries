@@ -1,0 +1,70 @@
+// Title: Suspicious Multi-Location Sign-ins - Potential Credential Sharing Detection
+// Description: Identifies applications where users are signing in from more distinct locations
+// than there are unique user accounts, suggesting potential credential sharing or account 
+// compromise. Shows detailed sign-in patterns including multiple locations per user per day 
+// and account status. Filters to apps with <1000 total sign-ins to focus on smaller, 
+// potentially targeted applications rather than noisy enterprise apps.
+let azureSignIns = SigninLogs 
+| where SourceSystem == "Azure AD" 
+| where OperationName == "Sign-in activity" 
+| extend SignInStatus = iff(ResultType == 0, "Success", "Failure") 
+| project TimeGenerated, OperationName, AppDisplayName, Identity, UserId, UserPrincipalName, Location, LocationDetails, ClientAppUsed, DeviceDetail, ConditionalAccessPolicies, SignInStatus, ResultType;
+// Get latest account status for each user based on sign-in attempts
+let accountStatus = azureSignIns
+| summarize arg_max(TimeGenerated, ResultType) by UserPrincipalName
+| extend AccountStatus = case(
+    ResultType == 50057, "Disabled",  // User account is disabled
+    ResultType == 50074, "Disabled",  // User account is disabled (strong auth required)
+    ResultType == 50005, "Disabled",  // User account is disabled by policy
+    ResultType == 0, "Active",        // Successful sign-in
+    "Unknown"                         // Other status
+)
+| project UserPrincipalName, AccountStatus;
+azureSignIns 
+| extend locationString = strcat(
+    tostring(LocationDetails["countryOrRegion"]), "/", 
+    tostring(LocationDetails["state"]), "/", 
+    tostring(LocationDetails["city"]), ";", 
+    tostring(LocationDetails["geoCoordinates"])
+) 
+| summarize rawSigninCount = count(), 
+           countByAccount = dcount(UserId), 
+           locationCount = dcount(locationString) by AppDisplayName 
+| where rawSigninCount < 1000 
+| where locationCount > countByAccount 
+| where 1.0 * rawSigninCount / locationCount > 0.8 
+| order by rawSigninCount desc 
+| join kind = leftouter (
+    azureSignIns 
+    | extend SignInDate = format_datetime(TimeGenerated, "yyyy-MM-dd")
+    | extend locationString = strcat(
+        tostring(LocationDetails["countryOrRegion"]), "/", 
+        tostring(LocationDetails["state"]), "/", 
+        tostring(LocationDetails["city"]), ";", 
+        tostring(LocationDetails["geoCoordinates"])
+    )
+    // Aggregate by user/app/date/location to show multiple locations per day
+    | summarize 
+        SignInsAtLocation = count(),
+        LatestSignIn = max(TimeGenerated),
+        SuccessfulSignIns = countif(SignInStatus == "Success"),
+        FailedSignIns = countif(SignInStatus == "Failure")
+        by AppDisplayName, UserPrincipalName, SignInDate, locationString
+    // Get additional details from the latest sign-in at this location
+    | join kind = leftouter (
+        azureSignIns 
+        | extend SignInDate = format_datetime(TimeGenerated, "yyyy-MM-dd")
+        | extend locationString = strcat(
+            tostring(LocationDetails["countryOrRegion"]), "/", 
+            tostring(LocationDetails["state"]), "/", 
+            tostring(LocationDetails["city"]), ";", 
+            tostring(LocationDetails["geoCoordinates"])
+        )
+        | summarize arg_max(TimeGenerated, *) by AppDisplayName, UserPrincipalName, SignInDate, locationString
+    ) on AppDisplayName, UserPrincipalName, SignInDate, locationString
+) on AppDisplayName 
+// Join with account status
+| join kind = leftouter (accountStatus) on UserPrincipalName
+| project AppDisplayName, TimeGenerated, Identity, SignInStatus, UserPrincipalName, locationString, AccountStatus, rawSigninCount, countByAccount, locationCount, SignInsAtLocation, SuccessfulSignIns, FailedSignIns
+| extend timestamp = TimeGenerated, AccountCustomEntity = UserPrincipalName 
+| order by AppDisplayName, UserPrincipalName, TimeGenerated desc
