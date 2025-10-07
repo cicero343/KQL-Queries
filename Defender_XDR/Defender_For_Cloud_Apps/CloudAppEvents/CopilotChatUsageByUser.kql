@@ -1,0 +1,7 @@
+// Summarizes Copilot Chat activity over the past 30 days by user and activity type.
+
+CloudAppEvents
+| where TimeGenerated > ago(30d)
+| where Application contains "Copilot Chat"
+| summarize EventCount = count() by AccountDisplayName, ActivityType
+| sort by EventCount desc
