@@ -1,0 +1,7 @@
+// Identifies allowed Safe Links clicks from the past 7 days across Microsoft 365 workloads, excluding trusted Microsoft domains.
+
+UrlClickEvents
+| where TimeGenerated > ago(7d)
+| where ActionType has "ClickAllowed"
+| where Url !has "microsoft.com"
+| project Timestamp, Url, NetworkMessageId, AppName, IPAddress, Workload, AccountUpn
