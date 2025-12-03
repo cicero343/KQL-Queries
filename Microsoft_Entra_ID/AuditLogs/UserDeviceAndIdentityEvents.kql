@@ -1,0 +1,10 @@
+// Retrieves Microsoft Entra AuditLog events including device actions,
+// provisioning, authentication, and user/group changes. Extracts initiating
+// user details and device attributes (when available) for clearer auditing.
+
+AuditLogs 
+| extend userPrincipalName_ = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName) 
+| extend DeviceRegInfo = tostring(AdditionalDetails[0].value) 
+| extend TrustType = tostring(AdditionalDetails[2].value) 
+| extend DeviceID = tostring(AdditionalDetails[4].value) 
+| project TimeGenerated, OperationName, Category, DeviceRegInfo, DeviceID, TrustType, userPrincipalName_
