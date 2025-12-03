@@ -1,0 +1,22 @@
+// Retrieves interactive sign-in attempts where Conditional Access failed.
+
+SigninLogs
+| where TimeGenerated between (startofmonth(now(), -1) .. startofmonth(now()))
+// | where TimeGenerated between (startofmonth(now(), -2) .. startofmonth(now(), -1)) // LAST MONTH //
+| where AuthenticationRequirement == "singleFactorAuthentication" 
+    or AuthenticationRequirement == "multiFactorAuthentication"
+// Only interactive sign-ins
+| where IsInteractive == true
+// Sign-in failed
+| where ResultType != 0
+// Conditional Access failed
+| where ConditionalAccessStatus == "failure"
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    IPAddress,
+    Status,
+    ConditionalAccessStatus,
+    AppDisplayName,
+    DeviceDetail,
+    Location
