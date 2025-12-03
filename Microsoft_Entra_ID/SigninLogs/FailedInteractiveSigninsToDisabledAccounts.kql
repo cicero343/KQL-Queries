@@ -1,0 +1,22 @@
+// Retrieves failed interactive sign-ins to disabled accounts within the
+// selected time window. Filters for ResultType 50057 and cases where
+// Conditional Access was not applied.
+
+SigninLogs
+| where TimeGenerated between (startofmonth(now(), -1) .. startofmonth(now()))
+// | where TimeGenerated between (startofmonth(now(), -2) .. startofmonth(now(), -1)) // LAST MONTH //
+// Interactive sign-ins only
+| where IsInteractive == true
+// Sign-in failed to disabled account
+| where ResultType == 50057
+// CA not applied
+| where ConditionalAccessStatus == "notApplied"
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    IPAddress,
+    Status,
+    ConditionalAccessStatus,
+    AppDisplayName,
+    DeviceDetail,
+    Location
