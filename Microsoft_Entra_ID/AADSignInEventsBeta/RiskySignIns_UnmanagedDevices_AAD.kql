@@ -1,4 +1,4 @@
-// Detects medium and high-risk browser sign-ins from unmanaged, non-compliant devices over the past 7 days.
+// Detects medium and high-risk browser sign-ins from unmanaged, non-compliant devices using the legacy AADSignInEventsBeta Azure AD sign-in telemetry table.
 
 AADSignInEventsBeta
 | where Timestamp > ago(7d)
