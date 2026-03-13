@@ -1,5 +1,4 @@
-// Description: Identifies medium and high-risk Entra ID sign-in events originating from unmanaged and non-compliant devices.
-// Purpose: Helps detect potentially compromised accounts accessing resources from unknown or untrusted browser sessions.
+// Detects medium and high-risk browser sign-ins from unmanaged, non-compliant devices using the EntraIdSignInEvents table (Defender XDR identity telemetry).
 
 EntraIdSignInEvents
 | where IsManaged != 1
