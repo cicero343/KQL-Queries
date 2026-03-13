@@ -1,4 +1,4 @@
-// Lists email events flagged for spoofing or impersonation based on detection methods.
+// This query lists email events flagged for spoofing or impersonation based on detection methods.
 
 EmailEvents
 | where Timestamp > ago(30d)
