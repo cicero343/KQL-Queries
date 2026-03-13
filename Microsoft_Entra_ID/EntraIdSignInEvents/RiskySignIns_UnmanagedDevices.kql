@@ -1,0 +1,27 @@
+// Description: Identifies medium and high-risk Entra ID sign-in events originating from unmanaged and non-compliant devices.
+// Purpose: Helps detect potentially compromised accounts accessing resources from unknown or untrusted browser sessions.
+
+EntraIdSignInEvents
+| where IsManaged != 1
+| where IsCompliant != 1
+//Filtering only for medium and high risk sign-in
+| where RiskLevelDuringSignIn in (50, 100)
+| where ClientAppUsed == "Browser"
+| where isempty(DeviceTrustType)
+| where isnotempty(State) or isnotempty(Country) or isnotempty(City)
+| where isnotempty(IPAddress)
+| where isnotempty(AccountObjectId)
+| where isempty(DeviceName)
+| project
+    Timestamp,
+    IPAddress,
+    AccountObjectId,
+    Application = ApplicationId,
+    SessionId,
+    Risk = RiskLevelDuringSignIn,
+    Browser,
+    Country,
+    State,
+    City,
+    ConditionalAccessStatus
+| order by Timestamp desc
