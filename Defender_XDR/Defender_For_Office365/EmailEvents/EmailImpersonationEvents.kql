@@ -1,0 +1,21 @@
+// Lists email events flagged for spoofing or impersonation based on detection methods.
+
+EmailEvents
+| where Timestamp > ago(30d)
+| where DetectionMethods contains "spoof" or DetectionMethods contains "impersonation"
+| project
+    Timestamp,
+    SenderFromAddress,
+    SenderMailFromDomain,
+    SenderFromDomain,
+    Subject,
+    EmailDirection,
+    NetworkMessageId,
+    InternetMessageId,
+    DeliveryAction,
+    DeliveryLocation,
+    ThreatTypes,
+    DetectionMethods,
+    RecipientEmailAddress,
+    RecipientObjectId
+| order by Timestamp desc
