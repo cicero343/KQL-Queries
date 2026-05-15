@@ -1,0 +1,24 @@
+// Detects file creation or renaming in ProgramData update and device sync directories followed by execution of known suspicious binaries.
+// May indicate abuse of trusted update/service paths for staging or execution (possible sideloading or masqueraded execution).
+
+let _timeFrame = 10m;
+let _armOrDevice =
+    DeviceFileEvents
+    | where Timestamp > ago(14d)
+    | where FolderPath has_any (
+        "C:\\ProgramData\\Adobe\\ARM\\", 
+        "C:\\ProgramData\\Microsoft\\DeviceSync\\",
+        "D:\\ProgramData\\Adobe\\ARM\\", 
+        "D:\\ProgramData\\Microsoft\\DeviceSync\\")
+      and ActionType in ("FileCreated","FileRenamed")
+    | project DeviceName, First=Timestamp, FileName;
+let _hostRun =
+    DeviceProcessEvents
+    | where Timestamp > ago(14d)
+    | where FileName in~ ("AcroServicesUpdater2_x64.exe","DlpUserAgent.exe","ADNotificationManager.exe")
+    | project DeviceName, Run=Timestamp, Host=FileName;
+_armOrDevice
+| join kind=inner _hostRun on DeviceName
+| where Run between (First .. (First+(_timeFrame)))
+| summarize First=min(First), Run=min(Run), Files=make_set(FileName, 10) by DeviceName, Host
+| order by Run desc
