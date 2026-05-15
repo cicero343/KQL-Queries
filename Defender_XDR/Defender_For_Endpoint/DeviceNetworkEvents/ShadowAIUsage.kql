@@ -1,0 +1,13 @@
+// Detects network connections to known generative AI platforms such as OpenAI, Claude, Gemini, and Perplexity.
+
+let GenAIDomains = dynamic([
+"openai.com","chat.openai.com","api.openai.com",
+"anthropic.com","claude.ai",
+"gemini.google.com","ai.google","bard.google.com",
+"perplexity.ai","cohere.com"
+]);
+DeviceNetworkEvents
+| extend Host = tostring(parse_url(RemoteUrl).Host)
+| where Host has_any (GenAIDomains) or RemoteUrl has_any (GenAIDomains)
+| summarize Connections=count(), Devices=dcount(DeviceName) by Host, InitiatingProcessAccountName, bin(Timestamp, 1h)
+| order by Timestamp desc
