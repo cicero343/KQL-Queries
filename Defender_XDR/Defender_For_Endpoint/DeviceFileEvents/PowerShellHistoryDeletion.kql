@@ -1,0 +1,8 @@
+// Detects deletion of PowerShell console history files (ConsoleHost_history.txt).
+// This may indicate attempts to remove evidence of executed PowerShell commands or anti-forensics activity.
+
+DeviceFileEvents
+| where Timestamp > ago(30d)
+| where FileName =~ "ConsoleHost_history.txt" and ActionType == "FileDeleted"
+| project Timestamp, DeviceName, InitiatingProcessFileName, InitiatingProcessCommandLine, FolderPath
+| order by Timestamp desc
