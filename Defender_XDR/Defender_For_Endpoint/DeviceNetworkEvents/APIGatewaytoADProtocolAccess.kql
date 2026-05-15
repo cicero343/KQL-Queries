@@ -1,0 +1,28 @@
+// Detects processes accessing AWS API Gateway endpoints followed by connections to AD-related ports (LDAP, SMB, RPC, LDAPS).
+// May indicate suspicious tooling behaviour or a potential pivot from external API interaction into internal network discovery.
+
+let _timeFrame = 10m;
+let _net1 =
+    DeviceNetworkEvents
+    | where Timestamp > ago(14d)
+    | where RemoteUrl has ".execute-api."
+    | where InitiatingProcessFileName !in~ ("chrome.exe","msedge.exe","firefox.exe")
+    | project DeviceName,
+              Proc=InitiatingProcessFileName,
+              OutTime=Timestamp,
+              RemoteUrl,
+              RemoteIP;
+let _net2 =
+    DeviceNetworkEvents
+    | where Timestamp > ago(14d)
+    | where RemotePort in (135,389,445,636)
+    | project DeviceName,
+              Proc=InitiatingProcessFileName,
+              InTime=Timestamp,
+              RemoteIP,
+              RemotePort;
+_net1
+| join kind=inner _net2 on DeviceName, Proc
+| where InTime between (OutTime .. (OutTime+(_timeFrame)))
+| summarize HitCount=count(), RemoteUrls=make_set(RemoteUrl), Ports=make_set(RemotePort), AffectedDevices=make_set(DeviceName), DeviceCount=dcount(DeviceName) by Proc 
+| order by HitCount desc
