@@ -1,0 +1,10 @@
+// Detects reconnaissance activity shortly after RMM tool execution, with no associated staging activity.
+// Helps identify potential adversary interactive sessions using remote access tools.
+
+let _reconWindow = 10m;
+let _stageWindow = 15m;
+let _rmm = DeviceProcessEvents | where Timestamp > ago(30d) | where FileName in~ ("QuickAssist.exe", "AnyDesk.exe", "TeamViewer.exe") | project DeviceName, RMMTime=Timestamp;
+let _recon = DeviceProcessEvents | where Timestamp > ago(30d) | where FileName in~ ("cmd.exe","powershell.exe","pwsh.exe") | where ProcessCommandLine has_any ("whoami", "hostname", "systeminfo", "ver", "wmic os get", "reg query HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "query user", "net user", "nltest", "ipconfig /all", "arp -a", "route print", "dir", "icacls") | project DeviceName, ReconTime=Timestamp, ReconCmd=ProcessCommandLine, ReconProc=FileName, ParentProc=InitiatingProcessFileName, ParentSignerType=InitiatingProcessSignerType;
+let _staging = DeviceFileEvents | where Timestamp > ago(30d) | where ActionType in ("FileCreated","FileRenamed") | where FileName matches regex @"(?i).*\\.(zip|exe|dll)$" | project DeviceName, STime=Timestamp, StageFile=FileName, StagePath=FolderPath;
+let _rmmRecon = _rmm | join kind=inner _recon on DeviceName | where ReconTime between (RMMTime .. (RMMTime+(_reconWindow))) | project DeviceName, RMMTime, ReconTime, ReconProc, ReconCmd, ParentProc, ParentSignerType;
+_rmmRecon | join kind=leftouter _staging on DeviceName | extend HasStagingInWindow = iff(STime between (RMMTime .. (RMMTime+(_stageWindow))), 1, 0) | summarize HasStagingInWindow=max(HasStagingInWindow) by DeviceName, RMMTime, ReconTime, ReconProc, ReconCmd, ParentProc, ParentSignerType | where HasStagingInWindow == 0 | project DeviceName, RMMTime, ReconTime, ReconProc, ReconCmd, ParentProc, ParentSignerType
