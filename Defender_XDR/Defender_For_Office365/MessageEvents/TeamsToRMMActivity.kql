@@ -1,0 +1,8 @@
+// Detects Microsoft Teams interactions followed by execution of RMM tools (QuickAssist, AnyDesk, TeamViewer) within a short time window.
+// May indicate social engineering attempts or abuse of remote support tools initiated via chat-based communication.
+
+let _timeFrame = 30m;
+let _identity = IdentityInfo | summarize arg_max(Timestamp, *) by AccountObjectId | project VictimAccountObjectId=AccountObjectId, VictimUPN=AccountUpn, VictimDisplayName=AccountDisplayName;
+let _teams = MessageEvents | where Timestamp > ago(14d) | extend Recipient = parse_json(RecipientDetails) | mv-expand Recipient | extend VictimAccountObjectId=tostring(Recipient.RecipientObjectId), VictimRecipientDisplayName=tostring(Recipient.RecipientUserDisplayName) | project TTime=Timestamp, SenderEmailAddress, SenderDisplayName, VictimAccountObjectId;
+let _rmm = DeviceProcessEvents | where Timestamp > ago(14d) | where FileName in~ ("QuickAssist.exe","AnyDesk.exe","TeamViewer.exe") | extend VictimAccountObjectId=tostring(InitiatingProcessAccountObjectId) | project DeviceName, QTime=Timestamp, RmmTool=FileName, VictimAccountObjectId;
+_teams | where isnotempty(VictimAccountObjectId) | join kind=inner _rmm on VictimAccountObjectId | where isnotempty(DeviceName) | where QTime between (TTime .. (TTime+(_timeFrame))) | join kind=leftouter _identity on VictimAccountObjectId | project DeviceName, VictimAccountObjectId, VictimUPN, VictimDisplayName, SenderEmailAddress, SenderDisplayName, TTime, QTime, RmmTool | order by QTime desc
