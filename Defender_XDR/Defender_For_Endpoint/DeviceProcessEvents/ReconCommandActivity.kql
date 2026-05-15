@@ -1,0 +1,18 @@
+// Identifies repeated system and network reconnaissance commands executed via cmd or PowerShell.
+// Filters out known benign administrative and security tooling, then aggregates activity to surface potential suspicious discovery behaviour.
+
+let _knownBenign = dynamic(["postman.exe","hp-plugin-executor.exe","lens-desktop.exe", "nessusd.exe"]);
+DeviceProcessEvents
+| where Timestamp > ago(14d)
+| where FileName in~ ("cmd.exe","powershell.exe","pwsh.exe")
+| where ProcessCommandLine has_any (
+    "whoami", "whoami /all", "whoami /groups", "whoami /priv",
+    "hostname", "systeminfo", "ver", "wmic os get",
+    "reg query HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+    "query user", "net user", "nltest", "ipconfig /all", "arp -a", "route print",
+    "dir", "icacls"
+)
+| where InitiatingProcessFileName !in~ (_knownBenign)
+| project Timestamp, DeviceName, FileName, InitiatingProcessFileName, ProcessCommandLine
+| summarize eventCount = count(), FileNames = make_set(FileName), InitiatingProcessFileNames = make_set(InitiatingProcessFileName), ProcessCommandLines = make_set(ProcessCommandLine, 5) by DeviceName
+| where eventCount > 2
