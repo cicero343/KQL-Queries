@@ -1,5 +1,5 @@
 // Detects Exchange Online mailbox item access from uncommon or untrusted ISP networks.
-// Helps identify potentially suspicious post-compromise email access activity.
+// Update the TrustedISPs list to match ISP providers commonly used in your environment.
 
 let TrustedISPs = dynamic([
     "BT",
