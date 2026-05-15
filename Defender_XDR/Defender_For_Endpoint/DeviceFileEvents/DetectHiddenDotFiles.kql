@@ -1,0 +1,10 @@
+// Detects creation or activity involving hidden dot-prefixed files outside Windows system directories.
+// Aggregates activity by device, file, and process to highlight potential suspicious or unusual hidden file usage.
+
+let HiddenFiles = DeviceFileEvents
+| where FileName startswith "."
+| where not(FolderPath has "\\Windows" or FolderPath has "\\System32") //Filter additional folders here
+| project DeviceName, FolderPath, FileName, InitiatingProcessFileName, InitiatingProcessId, InitiatingProcessCommandLine, InitiatingProcessParentFileName, ActionType, Timestamp;
+HiddenFiles
+| summarize FileCount = count(), ProcessList = make_set(InitiatingProcessFileName), ProcessIds = make_set(InitiatingProcessId) by DeviceName, FolderPath, FileName
+| project DeviceName, FolderPath, FileName, FileCount, ProcessList, ProcessIds
