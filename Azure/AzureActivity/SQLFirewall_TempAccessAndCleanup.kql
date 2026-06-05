@@ -1,0 +1,20 @@
+// Requires: AzureActivity table (Sentinel / Log Analytics — not XDR Advanced Hunting)
+// Hunts for temporary SQL firewall rules created and deleted by the same caller (cleanup behaviour)
+
+let windowHours = 30d;
+let fwCreated = AzureActivity
+    | where OperationNameValue =~ "microsoft.sql/servers/firewallrules/write"
+      and ActivityStatusValue =~ "Success"
+    | project CreateTime=TimeGenerated, Caller, CallerIpAddress,
+              ResourceId, Resource, ResourceGroup;
+let fwDeleted = AzureActivity
+    | where OperationNameValue =~ "microsoft.sql/servers/firewallrules/delete"
+      and ActivityStatusValue =~ "Success"
+    | project DeleteTime=TimeGenerated, Caller, ResourceId, Resource, ResourceGroup;
+fwCreated
+| join kind=inner fwDeleted on Caller, ResourceId
+| where DeleteTime between (CreateTime .. (CreateTime + windowHours))
+| summarize arg_min(DeleteTime, Resource, ResourceGroup) by CreateTime, Caller, CallerIpAddress, ResourceId
+| project CreateTime, DeleteTime, Caller, CallerIpAddress, Resource,
+          ResourceGroup, Duration=DeleteTime - CreateTime
+| order by CreateTime desc
