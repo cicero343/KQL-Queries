@@ -1,0 +1,68 @@
+// Investigative query — raw events, full detail. Scope by DeviceName or TimeGenerated before running.
+// Can be slow on broad time ranges — not for routine use.
+
+let rmm_signed = DeviceFileCertificateInfo
+| where Signer has_any (
+'Action1',
+'AeroAdmin',
+'Addigy',
+'Ammyy',
+'anydesk software',
+'philandro software', //AnyDesk
+'AOMEI International Network Limited', // anyviewer
+'Atera Networks',
+'aweray limited',
+'aweray pte. ltd.',
+'Barracuda Networks',
+'Bomgar Corporation', //beyondtrust
+'BeyondTrust Corporation',
+'BeyondTrust Software',
+'%%SIGNER%%' // possibly related to bluetrait.io, HVNC, ISLOnline, MeshCentral, mRemoteNG, parsec.app, RPort, RustDesk, SimpleHelp, TightVNC, Zoho Assist
+'ConnectWise',
+'CONTINUUM MANAGED', //connectwise / screenconnect
+'ScreenConnect',
+'DameWare Development',
+'Datto Inc',
+'NCH Software', // DesktopNow
+'German Gorodokuplya', // DistantDesktop
+'DWSNET OÜ', // DWService
+'FleetDeck',
+'Point B Ltd', // GetScreen
+'Enter Srl', // Iperius Remote
+'Enter S.R.L.', // Iperius Remote
+'Kaseya',
+'Level Software, Inc',
+'Yakhnovets Denis Aleksandrovich IP', // LiteManager
+'LogMeIn',
+'MSPBytes', // MSP360
+'Trichilia Consultants', //MSP360
+'N-Able Technologies',
+'LogicNow', // N-Able formerly SolarWinds
+'naverisk',
+'NavMK1 Limited', // Naverisk
+'netsupport',
+'ninjarmm',
+'Bravura Software LLC', // OptiTune
+'Panorama9',
+'pcvisit software ag',
+'pdq.com',
+'MMSoft Design', //Pulseway
+'famatech', // RAdmin
+'realvnc',
+'idrive', // RemotePC
+'Remote Utilities',
+'Projector.is, Inc.', // ScreenMeet
+'Krämer IT Solutions GmbH', // ServerEye
+'ShowMyPC',
+'Splashtop',
+'Nanosystems S.R.L.', // SupRemo
+'Servably, Inc.', // SyncroMSP
+'AmidaWare', // TacticalRMM
+'TacticalRMM',
+'TeamViewer',
+'glavsoft', // TightVNC
+'Duc Fabulous', // UltraViewer
+'XMReality')
+| distinct SHA1;
+DeviceProcessEvents
+| where SHA1 in~ (rmm_signed)
