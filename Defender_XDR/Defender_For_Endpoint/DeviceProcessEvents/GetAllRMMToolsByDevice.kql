@@ -1,0 +1,41 @@
+// Primary RMM detection query — summarised per device across all known signers.
+
+let rmm_signed =
+    DeviceFileCertificateInfo
+    | where Signer has_any (
+        'Action1', 'AeroAdmin', 'Addigy', 'Ammyy', 'anydesk software', 'philandro software',
+        'AOMEI International Network Limited',
+        'Atera Networks', 'aweray limited', 'aweray pte. ltd.',
+        'Barracuda Networks', 'Bomgar Corporation',
+        'BeyondTrust Corporation', 'BeyondTrust Software',
+        'ConnectWise', 'CONTINUUM MANAGED',
+        'ScreenConnect', 'DameWare Development', 'Datto Inc',
+        'NCH Software', 'German Gorodokuplya', 'DWSNET OÜ',
+        'FleetDeck', 'Point B Ltd', 'Enter Srl', 'Enter S.R.L.',
+        'Kaseya', 'Level Software, Inc', 'Yakhnovets Denis Aleksandrovich IP',
+        'LogMeIn', 'MSPBytes', 'Trichilia Consultants',
+        'N-Able Technologies', 'LogicNow',
+        'naverisk', 'NavMK1 Limited',
+        'netsupport', 'ninjarmm', 'Bravura Software LLC',
+        'Panorama9', 'pcvisit software ag', 'pdq.com',
+        'MMSoft Design', 'famatech', 'realvnc', 'idrive',
+        'Remote Utilities', 'Projector.is, Inc.',
+        'Krämer IT Solutions GmbH', 'ShowMyPC', 'Splashtop',
+        'Nanosystems S.R.L.', 'Servably, Inc.',
+        'AmidaWare', 'TacticalRMM', 'TeamViewer', 'glavsoft',
+        'Duc Fabulous', 'XMReality')
+    | distinct SHA1, Signer;
+DeviceProcessEvents
+| where TimeGenerated > ago(90d)
+| where SHA1 in~ (rmm_signed | project SHA1)
+| join kind=leftouter (rmm_signed) on SHA1
+| summarize
+    EventCount = count(),
+    Signers = make_set(Signer),
+    FilePaths = make_set(FolderPath),
+    InitiatingProcessPaths = make_set(InitiatingProcessFolderPath),
+    FileDescriptions = make_set(ProcessVersionInfoFileDescription),
+    FileNames = make_set(FileName),
+    Users = make_set(AccountUpn)
+    by DeviceName
+| sort by EventCount desc
