@@ -1,0 +1,23 @@
+let Storm2949Operations = dynamic([
+    "microsoft.Web/sites/publishxml/action",
+    "Microsoft.KeyVault/vaults/accessPolicies/write",
+    "microsoft.sql/servers/firewallrules/write",
+    "microsoft.sql/servers/firewallrules/delete",
+    "microsoft.Storage/storageAccounts/listkeys/action",
+    "Microsoft.Compute/virtualMachines/runCommands/write"
+]);
+CloudAuditEvents
+| where Timestamp > ago(30d)
+| where AuditSource == "Azure" and DataSource == "Azure Logs"
+| where OperationName in~ (Storm2949Operations)
+| extend Claims = parse_json(tostring(RawEventData.claims))
+| extend UPN = tostring(Claims["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"])
+| summarize OperationCount = dcount(OperationName),
+    Operations = make_set(OperationName),
+    IPAddresses = make_set(IPAddress),
+    Resources = make_set(AzureResourceId),
+    FirstSeen = min(Timestamp),
+    LastSeen = max(Timestamp)
+    by UPN
+| where OperationCount >= 3
+| order by OperationCount desc
